@@ -1,3 +1,7 @@
+# webtunnel (bannzai/webtunnel) の caller workflow。GitHub Actions 上の Chromium に extension/ を読み込んだ状態で
+# ローカルの agent-browser から CDP 操作する。起動・停止はローカル CLI から行う:
+#   WEBTUNNEL_REPO=bannzai/webfullscreencapture webtunnel up <session> --wait
+#   WEBTUNNEL_REPO=bannzai/webfullscreencapture webtunnel down <session>
 name: browser-session
 # run-name は local/webtunnel CLI が run を特定するキーのためこの形式を維持する
 run-name: "session=${{ inputs.session }} duration=${{ inputs.duration_minutes }}m"
