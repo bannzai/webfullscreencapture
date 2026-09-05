@@ -1,0 +1,1 @@
+開いているWebページ全体をスクショしてくれるChrome Extension
