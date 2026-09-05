@@ -19,7 +19,8 @@ chrome.runtime.onMessage.addListener((message) => {
 
 captureButton.addEventListener("click", async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !isCapturableUrl(tab.url)) {
+    // url は activeTab が付与されたタブでだけ読める。読めない場合は撮影を試み、background 側のエラーをそのまま表示する
+    if (!tab || (tab.url && !isCapturableUrl(tab.url))) {
         showStatus("このページは撮影できません (http / https / file のページで使ってください)", "error");
         return;
     }
