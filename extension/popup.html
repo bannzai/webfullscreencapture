@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>Web Full Screen Capture</title>
+<style>
+  :root {
+    --accent: #2563eb;
+    --accent-ink: #1e40af;
+    --ink: #1f2937;
+    --ink2: #6b7280;
+    --error: #b91c1c;
+    --surface: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #60a5fa;
+      --accent-ink: #bfdbfe;
+      --ink: #f3f4f6;
+      --ink2: #9ca3af;
+      --error: #fca5a5;
+      --surface: #1f2937;
+    }
+  }
+  body {
+    width: 280px;
+    margin: 0;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+  }
+  h1 { margin: 0 0 12px; font-size: 14px; }
+  button {
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: progress; }
+  #status { margin: 12px 0 0; min-height: 1.5em; color: var(--ink2); line-height: 1.5; word-break: break-all; }
+  #status.error { color: var(--error); }
+  #status.done { color: var(--accent-ink); }
+</style>
+</head>
+<body>
+  <h1>ページ全体をスクリーンショット</h1>
+  <button id="capture" type="button">撮影して PNG を保存</button>
+  <p id="status" aria-live="polite"></p>
+  <script src="popup.js"></script>
+</body>
+</html>

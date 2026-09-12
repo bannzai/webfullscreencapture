@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Web Full Screen Capture - ページ全体を 1 枚の画像に保存する Chrome 拡張</title>
+<meta name="description" content="スクロールしないと見えない部分まで含めて、開いている Web ページ全体を 1 枚の PNG に保存する Chrome 拡張機能。ボタンを押すだけで自動でスクロールしながら撮影し、ダウンロードフォルダに保存します。データは外部に送信しません。" />
+<link rel="canonical" href="https://bannzai.github.io/webfullscreencapture/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Web Full Screen Capture - ページ全体を 1 枚の画像に保存する Chrome 拡張" />
+<meta property="og:description" content="スクロールが必要な範囲まで含めて Web ページ全体を 1 枚の PNG に保存する Chrome 拡張機能。ボタンひとつで撮影し、データは外部に送信しません。" />
+<meta property="og:url" content="https://bannzai.github.io/webfullscreencapture/" />
+<meta property="og:image" content="https://bannzai.github.io/webfullscreencapture/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Web Full Screen Capture - ページ全体を 1 枚の画像に保存する Chrome 拡張" />
+<meta name="twitter:description" content="スクロールが必要な範囲まで含めて Web ページ全体を 1 枚の PNG に保存する Chrome 拡張機能。ボタンひとつで撮影し、データは外部に送信しません。" />
+<meta name="twitter:image" content="https://bannzai.github.io/webfullscreencapture/og.png" />
+<link rel="icon" href="./icon.png" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Web Full Screen Capture",
+  "url": "https://bannzai.github.io/webfullscreencapture/",
+  "image": "https://bannzai.github.io/webfullscreencapture/og.png",
+  "description": "開いている Web ページ全体を 1 枚の PNG に保存する Chrome 拡張機能",
+  "applicationCategory": "BrowserApplication",
+  "operatingSystem": "Chrome",
+  "author": { "@type": "Person", "name": "bannzai" }
+}
+</script>
+<style>
+  :root {
+    --accent: #2563eb;
+    --accent-soft: #dbeafe;
+    --accent-ink: #1e40af;
+    --paper: #f5f7fb;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --ink: #111827;
+    --ink2: #4b5563;
+    --ink3: #6b7280;
+    --line: rgba(17, 24, 39, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.8;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; }
+
+  .hero { padding: 48px 0 64px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center; }
+  .hero-copy { flex: 1 1 380px; }
+  .hero h1 { font-size: 38px; line-height: 1.4; letter-spacing: 0.02em; }
+  .hero h1 .accent { color: var(--accent); }
+  .hero p.lead { margin-top: 20px; font-size: 16px; color: var(--ink2); }
+  .cta-row { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 600;
+  }
+  .btn.secondary { background: var(--surface); color: var(--accent-ink); border: 1px solid var(--accent-soft); }
+  .btn.coming { background: var(--ink3); cursor: default; }
+
+  .demo { flex: 0 0 300px; margin: 0 auto; }
+  .browser {
+    background: var(--surface); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 48px rgba(17, 24, 39, 0.16); border: 1px solid var(--line);
+  }
+  .browser-bar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: #f9fafb; }
+  .browser-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #d1d5db; }
+  .browser-bar .url { flex: 1; height: 16px; border-radius: 8px; background: #e5e7eb; }
+  .browser-bar .ext { width: 18px; height: 18px; border-radius: 5px; background: var(--accent); }
+  .page { padding: 14px; position: relative; }
+  .page .bar { height: 10px; border-radius: 5px; background: #e5e7eb; margin-bottom: 8px; }
+  .page .bar.w60 { width: 60%; } .page .bar.w80 { width: 80%; } .page .bar.w40 { width: 40%; }
+  .page .block { height: 56px; border-radius: 8px; background: var(--accent-soft); margin: 12px 0; }
+  .page .fold { border-top: 2px dashed var(--accent); margin: 10px -14px; position: relative; }
+  .page .fold span {
+    position: absolute; right: 12px; top: -12px; font-size: 11px; font-weight: 700;
+    color: var(--accent-ink); background: var(--surface); padding: 0 6px;
+  }
+  .popup {
+    position: absolute; right: 12px; top: -6px; width: 196px;
+    background: var(--surface); border-radius: 10px; border: 1px solid var(--line);
+    box-shadow: 0 12px 24px rgba(17, 24, 39, 0.18); padding: 10px; font-size: 11px;
+  }
+  .popup .title { font-weight: 700; margin-bottom: 8px; }
+  .popup .button { background: var(--accent); color: #fff; border-radius: 6px; padding: 6px; text-align: center; font-weight: 600; }
+  .popup .status { margin-top: 6px; color: var(--accent-ink); }
+
+  section.steps, section.support { background: var(--surface); padding: 64px 0; }
+  section.features, section.cta { padding: 64px 0; }
+  h2 { font-size: 26px; text-align: center; }
+  .section-lead { text-align: center; color: var(--ink2); margin-top: 8px; font-size: 14px; }
+  .grid {
+    margin-top: 40px; display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  section.features .grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    border: 1px solid var(--line);
+  }
+  .card .num, .card .icon {
+    width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft);
+    display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--accent-ink);
+  }
+  .card h3 { margin-top: 14px; font-size: 17px; }
+  .card p { margin-top: 8px; font-size: 14px; color: var(--ink2); }
+
+  section.cta { text-align: center; }
+  section.cta p { color: var(--ink2); margin-top: 12px; }
+  section.cta .cta-row { justify-content: center; }
+
+  section.support .support-body {
+    margin: 32px auto 0; max-width: 640px;
+    background: var(--card); border-radius: 16px; padding: 28px;
+    border: 1px solid var(--line);
+  }
+  section.support h3 { font-size: 16px; margin-top: 20px; }
+  section.support h3:first-child { margin-top: 0; }
+  section.support p { margin-top: 8px; font-size: 14px; color: var(--ink2); }
+  section.support a { color: var(--accent); font-weight: 600; }
+
+  footer { background: var(--ink); color: rgba(255, 255, 255, 0.8); padding: 40px 0; font-size: 13px; }
+  footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
+  footer a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer .copyright { margin-top: 20px; color: rgba(255, 255, 255, 0.5); }
+
+  @media (max-width: 640px) {
+    .hero { padding: 24px 0 48px; }
+    .hero h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="brand"><img src="./icon.png" alt="" width="32" height="32" />Web Full Screen Capture</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container hero">
+      <div class="hero-copy">
+        <h1>スクロールの先まで<br /><span class="accent">ページ全体を 1 枚に</span></h1>
+        <p class="lead">
+          開いている Web ページを、画面に収まらない部分まで含めて 1 枚の PNG に保存する Chrome 拡張機能。<br />
+          ボタンを押すだけで自動でスクロールしながら撮影し、ダウンロードフォルダに保存します。
+        </p>
+        <div class="cta-row">
+          <span class="btn coming">Chrome ウェブストア 近日公開</span>
+          <a class="btn secondary" href="#how-it-works">使い方を見る</a>
+        </div>
+      </div>
+      <div class="demo" aria-hidden="true">
+        <div class="browser">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url"></span><span class="ext"></span></div>
+          <div class="page">
+            <div class="popup">
+              <div class="title">ページ全体をスクリーンショット</div>
+              <div class="button">撮影して PNG を保存</div>
+              <div class="status">撮影中 2 / 3</div>
+            </div>
+            <div class="bar w60"></div>
+            <div class="bar w80"></div>
+            <div class="block"></div>
+            <div class="bar w40"></div>
+            <div class="bar w80"></div>
+            <div class="fold"><span>画面の外</span></div>
+            <div class="block"></div>
+            <div class="bar w60"></div>
+            <div class="bar w80"></div>
+            <div class="bar w40"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="steps" id="how-it-works">
+      <div class="container">
+        <h2>使い方は 3 ステップ</h2>
+        <p class="section-lead">面倒な設定はありません</p>
+        <div class="grid">
+          <div class="card">
+            <div class="num">1</div>
+            <h3>保存したいページを開く</h3>
+            <p>記事、ドキュメント、ダッシュボードなど、Chrome で開いているページならどれでも対象です。</p>
+          </div>
+          <div class="card">
+            <div class="num">2</div>
+            <h3>拡張のアイコンをクリック</h3>
+            <p>ツールバーのアイコンから「撮影して PNG を保存」を押します。あとは自動で下までスクロールしながら撮影します。</p>
+          </div>
+          <div class="card">
+            <div class="num">3</div>
+            <h3>ダウンロードフォルダを開く</h3>
+            <p>ページのタイトルと日時が付いた PNG が保存されます。撮影後はスクロール位置も元に戻ります。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <h2>必要なことだけを、ブラウザの中で</h2>
+        <p class="section-lead">サーバーもアカウントもありません</p>
+        <div class="grid">
+          <div class="card">
+            <div class="icon">🖼</div>
+            <h3>ページ全体を 1 枚の PNG に</h3>
+            <p>画面に収まらない縦長のページも、分割して撮影した画像をつなぎ合わせて 1 枚にします。Retina などの高解像度ディスプレイにも対応します。</p>
+          </div>
+          <div class="card">
+            <div class="icon">📌</div>
+            <h3>固定ヘッダーの重複を抑える</h3>
+            <p>スクロールしても付いてくる固定ヘッダーやバナーは、先頭の 1 回だけ写して以降は隠します。</p>
+          </div>
+          <div class="card">
+            <div class="icon">🔒</div>
+            <h3>データは外部に送信しない</h3>
+            <p>撮影も保存もブラウザ内で完結します。ページの内容や画像がサーバーに送られることはなく、アクセス解析も含みません。</p>
+          </div>
+          <div class="card">
+            <div class="icon">✅</div>
+            <h3>最小限の権限</h3>
+            <p>アクセスするのは、あなたがアイコンをクリックしたタブだけ。すべてのサイトを常時読み取る権限は要求しません。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <h2>長いページも、そのまま残そう</h2>
+        <p>Chrome ウェブストアでの公開準備中です。公開までお待ちください。</p>
+        <div class="cta-row">
+          <span class="btn coming">Chrome ウェブストア 近日公開</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="support" id="support">
+      <div class="container">
+        <h2>サポート・お問い合わせ</h2>
+        <p class="section-lead">使い方のご質問、不具合のご報告、ご要望などはこちらへどうぞ</p>
+        <div class="support-body">
+          <h3>メールで問い合わせる</h3>
+          <p><a href="mailto:bannzai.app@gmail.com">bannzai.app@gmail.com</a></p>
+          <h3>うまく撮影できない時</h3>
+          <p>Chrome の設定ページや Chrome ウェブストアなど、拡張機能がアクセスできないページは撮影できません。ページを再読み込みしてからもう一度お試しください。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="links">
+        <a href="#support">サポート</a>
+        <a href="./Terms">利用規約</a>
+        <a href="./PrivacyPolicy">プライバシーポリシー</a>
+      </div>
+      <div class="copyright">© bannzai</div>
+    </div>
+  </footer>
+</body>
+</html>
